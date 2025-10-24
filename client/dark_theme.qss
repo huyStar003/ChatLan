@@ -1,0 +1,177 @@
+/* =================================================================
+   Dark Theme for Chat LAN - Inspired by Telegram Desktop
+   ================================================================= */
+
+/* --- Color Palette (Lấy cảm hứng từ Telegram) --- */
+/* :root is a concept from CSS, here we just use comments for reference */
+/* --bg-main: #17212b;       /* Nền chính, màu xanh đen đậm */
+/* --bg-secondary: #242f3d;  /* Nền phụ, cho các panel, sidebar */
+/* --bg-tertiary: #2b5278;   /* Màu nhấn cho tin nhắn của mình */
+/* --bg-hover: #394a5c;      /* Màu khi di chuột qua */
+/* --bg-selected: #4f5f70;   /* Màu khi một item được chọn */
+/* --text-primary: #ffffff;  /* Màu chữ chính (trắng) */
+/* --text-secondary: #a3b4c2;/* Màu chữ phụ (thời gian, status) */
+/* --accent-blue: #5288c1;   /* Màu nhấn xanh dương cho tên, icon */
+/* --border-color: #303f50;  /* Màu viền */
+
+/* --- General Styles --- */
+QWidget {
+    background-color: #17212b; /* Nền chính */
+    color: #ffffff;
+    border: none;
+    font-family: Arial, sans-serif;
+    font-size: 10pt;
+}
+
+QMainWindow, QDialog {
+    background-color: #17212b;
+}
+
+/* --- Sidebar (Danh bạ, Hội thoại) --- */
+QFrame#sidebar, QFrame#sidebar * {
+    background-color: #242f3d; /* Nền phụ */
+}
+
+/* --- Chat Area --- */
+QFrame#chat_area, QFrame#chat_area * {
+    background-color: #17212b; /* Nền chính */
+}
+QScrollArea {
+    background-color: transparent;
+}
+
+/* --- Input Fields --- */
+QLineEdit, QTextEdit {
+    background-color: #242f3d; /* Nền phụ */
+    color: #ffffff;
+    border: 1px solid #303f50;
+    border-radius: 16px; /* Bo tròn nhiều hơn */
+    padding: 10px;
+}
+QLineEdit:focus, QTextEdit:focus {
+    border: 1px solid #5288c1;
+}
+QTextEdit {
+    border-radius: 8px; /* Ô nhập liệu có thể ít tròn hơn */
+}
+
+/* Sửa lại style nút icon */
+QPushButton#icon_button {
+    background-color: transparent;
+    border: none;
+    border-radius: 17px; /* Bo tròn */
+    padding: 5px;
+}
+QPushButton:hover {
+    background-color: #639cd5;
+}
+QPushButton:disabled {
+    background-color: #394a5c;
+    color: #a3b4c2;
+}
+
+/* Nút icon (Gửi file, emoji,...) */
+QPushButton#icon_button {
+    background-color: transparent;
+    border-radius: 18px;
+    padding: 5px;
+}
+QPushButton#icon_button:hover {
+    background-color: #394a5c;
+}
+
+/* --- Lists (Hội thoại, Danh bạ) --- */
+QListWidget {
+    background-color: #242f3d;
+    border: none;
+}
+QListWidget::item {
+    background-color: transparent; /* Nền của item trong suốt */
+    color: #ffffff;
+    padding: 4px 8px;
+    border-bottom: 1px solid #303f50;
+}
+QListWidget::item:hover {
+    background-color: #394a5c;
+}
+QListWidget::item:selected {
+    background-color: #5288c1; /* Màu nhấn khi chọn */
+}
+
+/* --- Tabs --- */
+QTabWidget::pane {
+    border: none;
+}
+QTabBar::tab {
+    background-color: #242f3d;
+    color: #a3b4c2;
+    padding: 10px 20px;
+    border-bottom: 2px solid transparent; /* Viền dưới trong suốt */
+}
+QTabBar::tab:selected, QTabBar::tab:hover {
+    color: #ffffff;
+    border-bottom: 2px solid #5288c1; /* Viền dưới màu nhấn khi chọn */
+}
+
+/* --- Menu and Status Bar --- */
+QMenuBar {
+    background-color: #242f3d;
+}
+QMenu {
+    background-color: #242f3d;
+    border: 1px solid #303f50;
+}
+QMenu::item:selected {
+    background-color: #5288c1;
+}
+QStatusBar {
+    background-color: #242f3d;
+}
+QLabel#connection_label_ok {
+    color: #4fb25b; /* Màu xanh lá cây sáng hơn */
+    font-weight: bold;
+}
+QLabel#connection_label_fail {
+    color: #d94f4f; /* Màu đỏ sáng hơn */
+    font-weight: bold;
+}
+
+/* --- Splitter Handle --- */
+QSplitter::handle {
+    background-color: #303f50;
+}
+
+/* --- Chat Bubbles (Quan trọng nhất) --- */
+QFrame#bubble_own {
+    background-color: #2b5278; /* Màu xanh đậm cho tin nhắn của mình */
+    color: white;
+    border-radius: 12px;
+    /* Thêm padding để chữ không bị sát viền */
+    padding: 8px;
+}
+/* Áp dụng màu chữ cho các label bên trong bubble của mình */
+QFrame#bubble_own QLabel {
+    color: white;
+    background-color: transparent;
+}
+
+QFrame#bubble_other {
+    background-color: #242f3d; /* Màu nền phụ cho tin nhắn của người khác */
+    color: #ffffff;
+    border-radius: 12px;
+    padding: 8px;
+}
+/* Áp dụng màu chữ cho các label bên trong bubble của người khác */
+QFrame#bubble_other QLabel {
+    color: #ffffff;
+    background-color: transparent;
+}
+/* Màu tên người gửi trong chat nhóm */
+QLabel#sender_name_label {
+    color: #5288c1;
+    font-weight: bold;
+}
+/* Màu timestamp */
+QLabel#timestamp_label {
+    color: #a3b4c2;
+}

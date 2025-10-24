@@ -1,0 +1,19 @@
+<!DOCTYPE RCC><RCC version="1.0">
+<qresource prefix="icons">
+    <file alias="download.png">resources/icons/download.png</file>
+    <file alias="attachment.png">resources/icons/attachment.png</file>
+    <file alias="emoji.png">resources/icons/emoji.png</file>
+    <file alias="search.png">resources/icons/search.png</file>
+    <file alias="delete.png">resources/icons/delete.png</file> 
+    <file alias="users.png">resources/icons/users.png</file>
+    <file alias="info.png">resources/icons/info.png</file>
+    <file alias="email.png">resources/icons/email.png</file>
+    <file alias="at-sign.png">resources/icons/at-sign.png</file>
+    <file alias="status-online.png">resources/icons/status-online.png</file>
+    <file alias="status-offline.png">resources/icons/status-offline.png</file>
+    <file alias="settings.png">resources/icons/settings.png</file>
+    <file alias="bell-slash.png">resources/icons/bell-slash.png</file>
+    <file alias="link.png">resources/icons/link.png</file>
+
+</qresource>
+</RCC>
