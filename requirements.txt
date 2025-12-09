@@ -1,0 +1,12 @@
+# ChatLAN Dependencies
+
+# Client dependencies
+PyQt5>=5.15.0
+
+# Server dependencies  
+sqlalchemy>=1.4.0
+psycopg2-binary>=2.9.0
+
+# Common dependencies (usually built-in, but listed for clarity)
+# socket, json, threading, hashlib, base64, datetime are built-in Python modules
+

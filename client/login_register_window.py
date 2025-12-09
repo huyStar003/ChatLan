@@ -717,14 +717,15 @@ class LoginRegisterWindow(QWidget):
             
         self.hide_error_message("login")
         
-        password_hash = hashlib.sha256(password.encode()).hexdigest()
+        # Gửi plaintext password, server sẽ hash một lần
+        # (Đã sửa từ double-hash: client hash -> server hash lại)
         
         self.login_button.setEnabled(False)
         self.login_button.setText("Đang đăng nhập...")
         self.show_status("Đang xác thực thông tin đăng nhập...", "info")
         self.progress_bar.setVisible(True)
         
-        self.client.login(username, password_hash)
+        self.client.login(username, password)
         
     def handle_register(self):
         """Xử lý đăng ký"""
@@ -770,14 +771,15 @@ class LoginRegisterWindow(QWidget):
             
         self.hide_error_message("register")
         
-        password_hash = hashlib.sha256(password.encode()).hexdigest()
+        # Gửi plaintext password, server sẽ hash một lần
+        # (Đã sửa từ double-hash: client hash -> server hash lại)
         
         self.register_button.setEnabled(False)
         self.register_button.setText("Đang đăng ký...")
         self.show_status("Đang tạo tài khoản...", "info")
         self.progress_bar.setVisible(True)
         
-        self.client.register(username, password_hash, display_name, email)
+        self.client.register(username, password, display_name, email)
         
     def show_status(self, message, status_type="info"):
         """Hiển thị thông báo trạng thái"""

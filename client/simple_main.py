@@ -47,32 +47,57 @@ class ApplicationController:
 
     def on_login_success(self, user_data):
         """Xử lý khi đăng nhập thành công."""
-        print("Đăng nhập thành công, chuyển sang cửa sổ chat chính.")
-        client = self.login_window.client
-        
-        self.main_chat_window = MainChatWindow(client, user_data)
-        self.main_chat_window.logged_out.connect(self.on_logout)
-        
-        self.login_window.hide()
-        self.main_chat_window.show()
-        
-        print("Đang tải dữ liệu ban đầu...")
-        all_users = user_data.get('all_users', [])
-        conversations = user_data.get('conversations', [])
-        
-        self.main_chat_window.update_contacts([], all_users)
-        self.main_chat_window.update_conversations(conversations)
-        
-        if conversations:
-            print("Mở cuộc hội thoại đầu tiên làm mặc định...")
-            first_conv = conversations[0]
-            if first_conv.get('type') == 'private':
-                self.main_chat_window.start_private_chat(first_conv['other_user'])
-            elif first_conv.get('type') == 'group':
-                self.main_chat_window.start_group_chat(first_conv['group_id'], first_conv['group_name'])
-        else:
-            print("Không có hội thoại nào, hiển thị màn hình chào mừng.")
-            self.main_chat_window.show_welcome_screen()
+        try:
+            print("Đăng nhập thành công, chuyển sang cửa sổ chat chính.")
+            client = self.login_window.client
+            
+            # Kiểm tra dữ liệu user_data
+            if not user_data or 'user' not in user_data:
+                raise ValueError("Dữ liệu người dùng không hợp lệ")
+            
+            print("Đang khởi tạo cửa sổ chat chính...")
+            self.main_chat_window = MainChatWindow(client, user_data)
+            self.main_chat_window.logged_out.connect(self.on_logout)
+            
+            self.login_window.hide()
+            self.main_chat_window.show()
+            
+            print("Đang tải dữ liệu ban đầu...")
+            all_users = user_data.get('all_users', [])
+            conversations = user_data.get('conversations', [])
+            
+            self.main_chat_window.update_contacts([], all_users)
+            self.main_chat_window.update_conversations(conversations)
+            
+            if conversations:
+                print("Mở cuộc hội thoại đầu tiên làm mặc định...")
+                first_conv = conversations[0]
+                if first_conv.get('type') == 'private':
+                    self.main_chat_window.start_private_chat(first_conv['other_user'])
+                elif first_conv.get('type') == 'group':
+                    self.main_chat_window.start_group_chat(first_conv['group_id'], first_conv['group_name'])
+            else:
+                print("Không có hội thoại nào, hiển thị màn hình chào mừng.")
+                self.main_chat_window.show_welcome_screen()
+                
+        except Exception as e:
+            print(f"❌ Lỗi khi khởi tạo cửa sổ chat chính: {e}")
+            import traceback
+            traceback.print_exc()
+            
+            # Hiển thị thông báo lỗi và quay lại màn hình đăng nhập
+            QMessageBox.critical(
+                self.login_window,
+                "Lỗi",
+                f"Không thể khởi động cửa sổ chat chính:\n{str(e)}\n\nVui lòng thử đăng nhập lại."
+            )
+            
+            # Đảm bảo login window vẫn hiển thị
+            if self.main_chat_window:
+                self.main_chat_window.close()
+                self.main_chat_window = None
+            self.login_window.show()
+            self.login_window.reset_login_form()
 
     def on_logout(self):
         """Xử lý khi đăng xuất."""

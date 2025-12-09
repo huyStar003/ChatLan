@@ -11,7 +11,7 @@ from sqlalchemy import desc
 import os
 
 class ChatServer:
-    def __init__(self, host='192.168.1.20', port=12345):
+    def __init__(self, host='192.168.1.10', port=12345):
         self.host = host
         self.port = port
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -817,8 +817,8 @@ class ChatServer:
         self._broadcast_user_status(user_id, "offline")
     def _broadcast_message(self, message, exclude_user_id: int = None):
         """Broadcast tin nhắn đến các client phù hợp."""
-        # Chỉ broadcast tin nhắn nhóm
-        if not message.is_group_message:
+        # Chỉ broadcast tin nhắn nhóm (group_id không NULL)
+        if not message.group_id:
             return
         message_data = {
             "type": "new_message",

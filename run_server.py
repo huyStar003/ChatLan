@@ -3,6 +3,33 @@ import sys
 import signal
 import threading
 import time
+import configparser
+from typing import Dict, Any
+
+def load_server_config(config_path: str = "server_config.ini") -> Dict[str, Any]:
+    """
+    Đọc cấu hình server từ file INI.
+    Fallback về giá trị mặc định nếu file không tồn tại.
+    """
+    defaults = {
+        "host": "0.0.0.0",
+        "port": 12345
+    }
+    
+    config = configparser.ConfigParser()
+    if os.path.exists(config_path):
+        try:
+            config.read(config_path, encoding='utf-8')
+            if 'Server' in config:
+                server_config = config['Server']
+                return {
+                    "host": server_config.get('host', defaults['host']),
+                    "port": int(server_config.get('port', defaults['port']))
+                }
+        except Exception as e:
+            print(f"⚠️ Lỗi đọc config file {config_path}: {e}. Sử dụng giá trị mặc định.")
+    
+    return defaults
 
 def check_dependencies():
     """Kiểm tra các thư viện cần thiết"""
@@ -53,16 +80,22 @@ def main():
         return 1    
     try:
         # Import server
-        from server.server import ChatServer       
+        from server.server import ChatServer
+        
+        # Đọc cấu hình từ file
+        server_config = load_server_config()
+        SERVER_HOST = server_config["host"]
+        SERVER_PORT = server_config["port"]
+        
         print("📋 Thông tin Server:")
-        print("   - Host: 0.0.0.0 (tất cả interfaces)")
-        print("   - Port: 5432")
+        print(f"   - Host: {SERVER_HOST}")
+        print(f"   - Port: {SERVER_PORT}")
         print("   - Protocol: TCP Socket")
         print("   - Database: PostGreSQL")
         print("   - Features: Authentication, File Upload, Real-time Chat")
         print("=" * 60)        
         # Create server
-        server = ChatServer(host='0.0.0.0', port=12345)        
+        server = ChatServer(host=SERVER_HOST, port=SERVER_PORT)        
         # Handle Ctrl+C gracefully
         def signal_handler(sig, frame):
             print("\n🛑 Nhận tín hiệu dừng server...")

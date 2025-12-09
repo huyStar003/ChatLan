@@ -34,7 +34,27 @@ class User(Base):
     def hash_password(password):
         return hashlib.sha256(password.encode()).hexdigest()
     def verify_password(self, password):
-        return self.password_hash == self.hash_password(password)
+        """
+        Xác thực password với backward compatibility.
+        - User mới: password plaintext được hash một lần ở server
+        - User cũ (legacy): password đã được double-hash (client hash -> server hash lại)
+        
+        Logic: Hash password một lần và so sánh. Nếu không match và password là hash string
+        (64 hex chars từ client cũ), thử hash lại một lần nữa để so sánh với DB double-hash.
+        """
+        # Hash password một lần (cho user mới hoặc plaintext từ client mới)
+        single_hash = self.hash_password(password)
+        if self.password_hash == single_hash:
+            return True
+        
+        # Backward compatibility: Nếu password là hash string từ client cũ (64 hex chars),
+        # hash lại một lần nữa để so sánh với DB (đã là double-hash)
+        if len(password) == 64 and all(c in '0123456789abcdef' for c in password.lower()):
+            double_hash = self.hash_password(password)
+            if self.password_hash == double_hash:
+                return True
+        
+        return False
 class Group(Base):
     __tablename__ = "groups"
     id = Column(Integer, primary_key=True, index=True)

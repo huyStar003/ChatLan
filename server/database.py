@@ -7,26 +7,89 @@ from typing import List, Optional, Dict, Any, Tuple
 import secrets
 import base64
 import os
-# Thông tin kết nối PostgreSQL
-DB_USER = "chat_user"
-DB_PASSWORD = "chat_password"
-DB_HOST = "192.168.1.20"
-DB_PORT = "5432"
-DB_NAME = "chat_lan_db"
+import configparser
+
+def load_database_config(config_path: str = "server_config.ini") -> Dict[str, str]:
+    """
+    Đọc cấu hình database từ file INI.
+    Fallback về giá trị mặc định nếu file không tồn tại.
+    """
+    defaults = {
+        "db_user": "chat_user",
+        "db_password": "chat_password",
+        "db_host": "192.168.1.10",
+        "db_port": "5432",
+        "db_name": "chat_lan_db"
+    }
+    
+    config = configparser.ConfigParser()
+    if os.path.exists(config_path):
+        try:
+            config.read(config_path, encoding='utf-8')
+            if 'Database' in config:
+                db_config = config['Database']
+                return {
+                    "db_user": db_config.get('db_user', defaults['db_user']),
+                    "db_password": db_config.get('db_password', defaults['db_password']),
+                    "db_host": db_config.get('db_host', defaults['db_host']),
+                    "db_port": db_config.get('db_port', defaults['db_port']),
+                    "db_name": db_config.get('db_name', defaults['db_name'])
+                }
+        except Exception as e:
+            print(f"⚠️ Lỗi đọc config file {config_path}: {e}. Sử dụng giá trị mặc định.")
+    
+    return defaults
+
+# Đọc cấu hình database
+_db_config = load_database_config()
+DB_USER = _db_config["db_user"]
+DB_PASSWORD = _db_config["db_password"]
+DB_HOST = _db_config["db_host"]
+DB_PORT = _db_config["db_port"]
+DB_NAME = _db_config["db_name"]
+
 # Chuỗi kết nối (Connection String) cho PostgreSQL
-DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+# Thêm sslmode=disable để cho phép kết nối không mã hóa (phù hợp cho môi trường LAN nội bộ)
+DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}?sslmode=disable"
 class DatabaseManager:
     def __init__(self, database_url: str = DATABASE_URL):
-        # Thay đổi trong hàm create_engine
-        self.engine = create_engine(
-            database_url,
-            # Không cần connect_args cho PostgreSQL
-            echo=False # Đặt là True nếu muốn xem các câu lệnh SQL được thực thi
+        """
+        Khởi tạo DatabaseManager với connection string.
+        
+        Lưu ý về lỗi pg_hba.conf:
+        - Nếu PostgreSQL và ứng dụng chạy trên cùng máy: dùng localhost hoặc 127.0.0.1
+        - Nếu PostgreSQL chạy trên máy khác: cần cấu hình pg_hba.conf trên PostgreSQL server
+          Thêm dòng: host    chat_lan_db    chat_user    192.168.1.10/32    md5
+        """
+        try:
+            # Thay đổi trong hàm create_engine
+            self.engine = create_engine(
+                database_url,
+                # Không cần connect_args cho PostgreSQL khi dùng sslmode trong URL
+                echo=False, # Đặt là True nếu muốn xem các câu lệnh SQL được thực thi
+                pool_pre_ping=True  # Kiểm tra kết nối trước khi sử dụng
             )
-        # Tạo tất cả các bảng nếu chúng chưa tồn tại
-        Base.metadata.create_all(bind=self.engine)        
-        SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=self.engine)
-        self.db = SessionLocal()   
+            # Tạo tất cả các bảng nếu chúng chưa tồn tại
+            Base.metadata.create_all(bind=self.engine)        
+            SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=self.engine)
+            self.db = SessionLocal()
+        except Exception as e:
+            error_msg = str(e)
+            if "pg_hba.conf" in error_msg:
+                print("\n" + "="*60)
+                print("❌ LỖI KẾT NỐI DATABASE:")
+                print("="*60)
+                print("PostgreSQL không cho phép kết nối từ IP này.")
+                print("\n💡 GIẢI PHÁP:")
+                print("1. Nếu PostgreSQL và ứng dụng chạy trên cùng máy:")
+                print("   - Đổi db_host trong server_config.ini thành: localhost hoặc 127.0.0.1")
+                print("\n2. Nếu PostgreSQL chạy trên máy khác (192.168.1.10):")
+                print("   - Trên máy PostgreSQL server, chỉnh sửa file pg_hba.conf")
+                print("   - Thêm dòng: host    chat_lan_db    chat_user    192.168.1.10/32    md5")
+                print("   - Hoặc cho phép tất cả: host    all    all    192.168.1.0/24    md5")
+                print("   - Sau đó restart PostgreSQL service")
+                print("="*60 + "\n")
+            raise   
     def register_user(self, username: str, password: str, display_name: str = None, email: str = None) -> Tuple[bool, str, Optional[User]]:
         """Đăng ký user mới và tự động thêm vào nhóm chung (ID=1)."""
         try:
@@ -337,12 +400,16 @@ class DatabaseManager:
     def search_messages(self, user_id: int, query: str, limit: int = 20) -> List[Dict]:
         """Tìm kiếm tin nhắn"""
         try:
+            # Lấy user để kiểm tra các nhóm mà user tham gia
+            user = self.db.query(User).filter(User.id == user_id).first()
+            user_group_ids = [g.id for g in user.groups] if user else []
+            
             messages = self.db.query(Message).filter(
                 and_(
                     or_(
                         Message.sender_id == user_id,
                         Message.receiver_id == user_id,
-                        Message.is_group_message == True
+                        Message.group_id.in_(user_group_ids)  # Tin nhắn từ các nhóm user tham gia
                     ),
                     Message.content.contains(query)
                 )
@@ -437,9 +504,10 @@ class DatabaseManager:
                 conversation.last_message_id = None
                 self.db.commit() # Commit thay đổi này trước
             # --- BƯỚC 2: Bây giờ mới tiến hành xóa tin nhắn ---
+            # Chỉ xóa tin nhắn riêng tư (group_id IS NULL)
             messages_to_delete = self.db.query(Message).filter(
                 and_(
-                    Message.is_group_message == False,
+                    Message.group_id.is_(None),  # Chỉ tin nhắn riêng tư
                     or_(
                         and_(Message.sender_id == user_id, Message.receiver_id == other_user_id),
                         and_(Message.sender_id == other_user_id, Message.receiver_id == user_id)

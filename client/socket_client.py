@@ -13,7 +13,7 @@ class SocketClient(QObject):
     def __init__(self):
         super().__init__()
         self.socket: Optional[socket.socket] = None
-        self.host = '192.168.1.5'
+        self.host = 'localhost'  # Default to localhost for consistency with UI
         self.port = 12345
         self.session_token: Optional[str] = None
         self.user_id: Optional[int] = None
@@ -64,13 +64,18 @@ class SocketClient(QObject):
     def send_message(self, message: dict) -> bool:
         """Gửi tin nhắn đến server"""
         if not self.connected_flag or not self.socket:
+            print(f"DEBUG: Cannot send message - connected_flag={self.connected_flag}, socket={self.socket}")
             self.error_occurred.emit("Không có kết nối đến server")
             return False
         try:
             data = json.dumps(message, ensure_ascii=False).encode('utf-8')
-            self.socket.send(data)
+            print(f"DEBUG CLIENT SEND -> RAW DATA: {data.decode('utf-8')}")
+            # Use sendall to ensure all data is sent
+            self.socket.sendall(data)
+            print(f"DEBUG: Successfully sent {len(data)} bytes")
             return True
         except Exception as e:
+            print(f"DEBUG: Error sending message: {e}")
             self.error_occurred.emit(f"Lỗi gửi tin nhắn: {str(e)}")
             self._handle_connection_lost()
             return False
